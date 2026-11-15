@@ -1,0 +1,36 @@
+{
+  "background_color": "#fafafa",
+  "categories": [
+    "finance",
+    "productivity"
+  ],
+  "description": "View your expenses, balance and monthly charts \u2014 backed by your own Google Sheet.",
+  "display": "standalone",
+  "handle_links": "not-preferred",
+  "icons": [
+    {
+      "purpose": "any",
+      "sizes": "192x192",
+      "src": "/icons/icon-192.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any",
+      "sizes": "512x512",
+      "src": "/icons/icon-512.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "/icons/maskable-512.png",
+      "type": "image/png"
+    }
+  ],
+  "name": "Ledgerly",
+  "orientation": "portrait",
+  "scope": "/",
+  "short_name": "Ledgerly",
+  "start_url": "/",
+  "theme_color": "#10b981"
+}

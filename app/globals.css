@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Accent themes — RGB triplets so Tailwind can apply opacity. */
+:root,
+:root[data-accent="emerald"] {
+  --accent: 16 185 129;
+  --accent-soft: 209 250 229;
+  --accent-strong: 4 120 87;
+}
+:root[data-accent="indigo"] {
+  --accent: 99 102 241;
+  --accent-soft: 224 231 255;
+  --accent-strong: 67 56 202;
+}
+:root[data-accent="amber"] {
+  --accent: 245 158 11;
+  --accent-soft: 254 243 199;
+  --accent-strong: 180 83 9;
+}
+.dark[data-accent="emerald"] {
+  --accent-soft: 6 78 59;
+}
+.dark[data-accent="indigo"] {
+  --accent-soft: 49 46 129;
+}
+.dark[data-accent="amber"] {
+  --accent-soft: 120 53 15;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+}
+
+/* Thin, unobtrusive scrollbars for pill rows and tables. */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(161 161 170 / 0.5) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(161 161 170 / 0.5);
+  border-radius: 9999px;
+}
