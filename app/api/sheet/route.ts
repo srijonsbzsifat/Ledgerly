@@ -2,19 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSheetInfo, parseSheetId } from "@/lib/sheets";
 import {
   SHEET_COOKIE,
+  SHEET_COOKIE_OPTS,
   clearSheetCookie,
   encodeSheetCookie,
   getSessionUser,
   getSheetContext,
 } from "@/lib/server-auth";
-
-const COOKIE_OPTS = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  path: "/",
-  maxAge: 60 * 60 * 24 * 365, // 1 year
-  secure: process.env.NODE_ENV === "production",
-};
 
 /** GET /api/sheet — info about the sheet the CURRENT user connected. */
 export async function GET(req: NextRequest) {
@@ -82,7 +75,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set(
       SHEET_COOKIE,
       encodeSheetCookie(user.userId, spreadsheetId),
-      COOKIE_OPTS
+      SHEET_COOKIE_OPTS
     );
     return res;
   } catch (err) {

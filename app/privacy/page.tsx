@@ -11,14 +11,14 @@ const SECTIONS: { heading: string; body: string[] }[] = [
   {
     heading: "What this app is",
     body: [
-      "Ledgerly is a personal expense dashboard. It reads a Google Sheet you choose — in the Cash 2026 format, with monthly tabs — and shows your balance, monthly income versus expenses, category breakdowns and transactions. You can also add new expense and income entries from the app, which are written back to that same sheet.",
+      "Ledgerly is a personal expense dashboard. It reads a Google Sheet you choose — in the Cash 2026 format, with monthly tabs — and shows your balance, monthly income versus expenses, category breakdowns and transactions. You can also add new expense and income entries from the app, which are written back to that same sheet. If you don't have a sheet yet, the app can create a new one for you in your Google Drive, already set up in the same format.",
     ],
   },
   {
     heading: "What data the app accesses",
     body: [
       "When you sign in with Google, the app receives your basic profile information (name, email address and profile picture) so it can show who is signed in.",
-      "When you connect a sheet, the app accesses that spreadsheet only: it reads the rows of its monthly tabs and appends new rows when you add an entry. It does not read, list or access any other file in your Google Drive.",
+      "When you connect a sheet, the app accesses that spreadsheet only: it reads the rows of its monthly tabs and appends new rows when you add an entry. It does not read, list or access any other file in your Google Drive. If you choose to create a new sheet, the app creates one new spreadsheet in your Drive — that is the only file it ever creates.",
       "The app asks Google for exactly two things: your basic profile, and access to Google Sheets. It never asks for access to your email, contacts, calendar or Drive files.",
     ],
   },
@@ -34,7 +34,7 @@ const SECTIONS: { heading: string; body: string[] }[] = [
     heading: "What the app does not do",
     body: [
       "The app does not sell, share or send your data to any third party. It has no advertising, no analytics and no trackers.",
-      "The app does not read any spreadsheet you have not explicitly connected, and it never changes a sheet except by appending the entries you add.",
+      "The app does not read any spreadsheet you have not explicitly connected, and it never changes a sheet except through the entries you add, edit or delete — and it only creates a new spreadsheet when you ask it to.",
     ],
   },
   {

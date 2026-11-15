@@ -16,6 +16,15 @@ export async function getAccessToken(req: NextRequest): Promise<string | null> {
 
 export const SHEET_COOKIE = "cash-sheet-id";
 
+/** Cookie options for the connected-sheet cookie, shared by /api/sheet and /api/sheet/create. */
+export const SHEET_COOKIE_OPTS = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: 60 * 60 * 24 * 365, // 1 year
+  secure: process.env.NODE_ENV === "production",
+};
+
 /**
  * The sheet cookie is OWNER-SCOPED: its value is `<google-user-id>:<sheet-id>`.
  *

@@ -35,6 +35,101 @@ function friendlyError(status: number): string {
   return `Google Sheets returned an error (HTTP ${status}). Please try again.`;
 }
 
+/** Header row of a Cash 2026 sheet — same columns, same order, every tab. */
+export const CASH_SHEET_HEADERS = [
+  "ID",
+  "Date",
+  "Type",
+  "Category",
+  "Description",
+  "Amount",
+  "Currency",
+  "Linked account",
+  "Link ID",
+  "Notes",
+];
+
+/**
+ * Create a brand-new spreadsheet in the signed-in user's Google Drive, set
+ * up in the Cash 2026 format: 12 monthly tabs, each with the header row in
+ * row 1 and the header frozen.
+ *
+ * Uses spreadsheets.create, which works with the spreadsheets scope the app
+ * already requests — no Drive scope, no new permission, no re-consent.
+ *
+ * The header row is load-bearing, not cosmetic: the app appends new entries
+ * after the last row, so without headers the first entry would land in row 1
+ * and be invisible to the reader (which reads from A2). If the header write
+ * fails, this throws and the caller must NOT connect the sheet — the user
+ * can delete the half-made spreadsheet from Drive and retry.
+ */
+export async function createCashSheet(
+  accessToken: string,
+  title: string
+): Promise<SheetInfo> {
+  const name = title.trim().slice(0, 100) || "Cash 2026";
+  const create = await sheetsFetch(accessToken, "", {
+    method: "POST",
+    body: JSON.stringify({
+      properties: { title: name },
+      sheets: MONTHS.map((month) => ({
+        properties: {
+          title: month,
+          gridProperties: { frozenRowCount: 1 },
+        },
+      })),
+    }),
+  });
+  if (!create.ok) throw new Error(friendlyError(create.status));
+  const created = await create.json();
+  const spreadsheetId = created?.spreadsheetId as string | undefined;
+  if (!spreadsheetId) throw new Error("Google did not return a sheet ID.");
+
+  // Defensive: if the API added any sheet outside the 12 months (e.g. a
+  // default "Sheet1"), remove it so the new sheet is exactly the format.
+  const createdTitles: { sheetId?: number; title?: string }[] = (
+    created?.sheets ?? []
+  ).map((s: { properties?: { sheetId?: number; title?: string } }) => ({
+    sheetId: s?.properties?.sheetId,
+    title: s?.properties?.title,
+  }));
+  const extras = createdTitles.filter(
+    (s) =>
+      typeof s.sheetId === "number" &&
+      !(MONTHS as readonly string[]).includes(s.title ?? "")
+  );
+  if (extras.length > 0) {
+    await sheetsFetch(accessToken, `/${spreadsheetId}:batchUpdate`, {
+      method: "POST",
+      body: JSON.stringify({
+        requests: extras.map((s) => ({ deleteSheet: { sheetId: s.sheetId } })),
+      }),
+    });
+    // Non-fatal if this fails — an extra empty tab is harmless.
+  }
+
+  const headers = await sheetsFetch(
+    accessToken,
+    `/${spreadsheetId}/values:batchUpdate`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        valueInputOption: "RAW",
+        data: MONTHS.map((month) => ({
+          range: `${month}!A1:J1`,
+          values: [CASH_SHEET_HEADERS],
+        })),
+      }),
+    }
+  );
+  if (!headers.ok) {
+    throw new Error(
+      `The sheet "${name}" was created in your Google Drive, but its monthly tabs could not be set up. Please delete it from Drive and try again.`
+    );
+  }
+  return { id: spreadsheetId, title: name, tabs: [...MONTHS] };
+}
+
 /** Validate a sheet and return its title and tab names. */
 export async function getSheetInfo(
   accessToken: string,
