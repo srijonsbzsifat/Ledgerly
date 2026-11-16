@@ -1,20 +1,46 @@
 # Ledgerly
 
-A simple, modern expense dashboard backed by a Google Sheet in the **Cash 2026**
-format. Sign in with Google, connect your sheet, and see your balance, monthly
-income vs expenses, category breakdowns — and add new entries from the dashboard.
+A simple, modern expense tracker backed by your own Google Sheet. Sign in
+with Google, connect a sheet (or create one in the right format from inside
+the app), and see your balance, monthly spending pace, category breakdowns and
+reports — and add entries from the dashboard or your phone.
 
-- **No database, no analytics, no tracking.** Your data lives only in your own
-  Google Sheet, accessed with your own Google account. Each signed-in visitor
-  sees only their own sheet.
-- **Themes:** light/dark mode plus emerald, indigo and amber accent themes,
-  saved in your browser.
+## Try it live
+
+**https://cash-dashboard-two.vercel.app**
+
+No install needed. Sign in with Google, connect your sheet, and your data is
+there. On Android you can install it as an app from the browser menu.
+
+![Ledgerly landing page](docs/screenshots/landing-desktop.png)
+
+## What it does
+
+- **Overview** — balance at a glance, a spending-pace card (safe-to-spend per
+  day, projected month-end, fixed vs one-off vs everyday split), monthly
+  targets, unusual-spending insights, expected recurring payments, and a
+  calendar heatmap of your days.
+- **Transactions** — grouped by day, with search, filters, sorting,
+  pagination, multi-select bulk delete, and edit in place.
+- **Reports** — monthly or yearly view: daily trend, 12-month income vs
+  spending, share-of-spending donut, category bars, and a year summary.
+- **Manage** — your own category list (add, rename, reorder), accounts with
+  transfers between them, recurring payments (mark, pause, edit), monthly
+  budgets, CSV import and export, a 30-day trash, and notes.
+- **Multi-sheet** — connect more than one sheet and switch between them from
+  the header; create a brand-new sheet in the right format without leaving
+  the app.
+- **Private by design** — no database, no analytics, no tracking. Your data
+  lives only in your own Google Sheet, accessed with your own Google account.
+  Each signed-in visitor sees only their own sheet, and a sheet connection
+  never leaks to another account on the same device.
+- **Themes** — light/dark mode with emerald and indigo accents, saved in
+  your browser.
 
 ## Sheet format
 
-A Google Sheet with monthly tabs named `January`–`December` (tabs may be empty
-except the header; missing tabs and extra non-month tabs are tolerated). Each
-tab's header row must be:
+A Google Sheet with monthly tabs named `January`–`December`. Each tab's header
+row is:
 
 ```
 ID | Date | Type | Category | Description | Amount | Currency | Linked account | Link ID | Notes
@@ -24,78 +50,27 @@ ID | Date | Type | Category | Description | Amount | Currency | Linked account |
 - `Date` is `YYYY-MM-DD`. New entries are appended to the tab for the month of
   their date, with a fresh UUID in `ID`.
 - `Currency` is `BDT`.
+- `Linked account` / `Link ID` are used by accounts and transfers; leave them
+  blank and everything counts as your default account.
+- Tabs may be empty except the header; missing tabs and extra non-month tabs
+  are tolerated. The app may add `Categories`, `Accounts`, `Trash`, `Notes`,
+  `Recurring` and `Budgets` tabs to the sheet to store its lists — your
+  entries are never moved or reformatted.
 
-## Setup
+Don't have a sheet yet? Choose "Create a new sheet" after signing in and the
+app makes one for you in this format.
 
-### 1. Create a Google Cloud project
+## How your data is handled
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create a
-   project (or reuse an existing one).
-2. Enable the **Google Sheets API** (APIs & Services → Library → search
-   "Google Sheets API" → Enable).
-3. Go to APIs & Services → **OAuth consent screen**, configure it (External user
-   type is fine), and add the scope
-   `https://www.googleapis.com/auth/spreadsheets` under "Scopes". Add yourself as a
-   test user while the app is in Testing mode.
-4. Go to APIs & Services → **Credentials** → Create Credentials → **OAuth
-   client ID** → Application type **Web application**.
-5. Add an **Authorized redirect URI**:
-   - Local dev: `http://localhost:3000/api/auth/callback/google`
-   - Production: `https://<your-vercel-domain>/api/auth/callback/google`
-6. Copy the **Client ID** and **Client Secret**.
+- Sign-in is Google OAuth with the `spreadsheets` scope only — the app can
+  read and write the sheets you connect, nothing else in your Google account.
+- Tokens live only in the encrypted server-side session; they are never sent
+  to the browser.
+- The app never copies your data anywhere: every screen reads straight from
+  your sheet, and edits write straight back to it.
+- Full details: [Privacy policy](https://cash-dashboard-two.vercel.app/privacy).
 
-### 2. Environment variables
+## Tech
 
-Copy `.env.example` to `.env.local` and fill in:
-
-```
-GOOGLE_CLIENT_ID=…
-GOOGLE_CLIENT_SECRET=…
-NEXTAUTH_SECRET=…          # generate with: openssl rand -base64 32
-NEXTAUTH_URL=http://localhost:3000
-```
-
-Never commit real values — `.env*` files are gitignored.
-
-### 3. Run locally
-
-```bash
-npm install
-npm run dev
-```
-
-Open http://localhost:3000, sign in with Google, and paste your sheet link
-(your Cash 2026 sheet ID is prefilled as a suggestion — paste a different link
-to use another sheet).
-
-### 4. Deploy to Vercel
-
-1. Push this folder to a Git repository and import it in
-   [Vercel](https://vercel.com/new).
-2. Add the four environment variables above in the Vercel project settings
-   (set `NEXTAUTH_URL` to your Vercel domain, e.g.
-   `https://cash-dashboard.vercel.app`).
-3. Add that domain's `/api/auth/callback/google` redirect URI to your Google
-   OAuth client (step 1.5 above).
-4. Deploy.
-
-## How it works
-
-- **Auth:** NextAuth (Google provider) with the `spreadsheets` scope and
-  offline access, so a refresh token is issued and access tokens are refreshed
-  automatically. Tokens live only in the encrypted server-side JWT — they are
-  never sent to the browser.
-- **Sheet picker:** the pasted URL/ID is validated against the Sheets API; on
-  success it is remembered in an `httpOnly` cookie. Disconnect any time from
-  the dashboard footer.
-- **Data:** the dashboard reads all twelve monthly tabs via the Sheets REST
-  API and computes everything client-side. Adding an entry appends a row in
-  the exact column order above.
-
-## Scripts
-
-| Command         | What it does              |
-| --------------- | ------------------------- |
-| `npm run dev`   | Start the dev server      |
-| `npm run build` | Production build          |
-| `npm start`     | Serve the production build |
+Next.js (App Router), TypeScript, Tailwind CSS, NextAuth, and the Google
+Sheets API — no database.

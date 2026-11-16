@@ -11,7 +11,7 @@ type Mode = "choose" | "create" | "connect";
 export function SheetPicker({ onConnected }: { onConnected: (info: SheetInfo) => void }) {
   const [mode, setMode] = useState<Mode>("choose");
   const [input, setInput] = useState(SUGGESTED_SHEET_ID);
-  const [title, setTitle] = useState("Cash 2026");
+  const [title, setTitle] = useState(() => `Cash ${new Date().getFullYear()}`);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +48,7 @@ export function SheetPicker({ onConnected }: { onConnected: (info: SheetInfo) =>
       const res = await fetch("/api/sheet/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim() || "Cash 2026" }),
+        body: JSON.stringify({ title: title.trim() || `Cash ${new Date().getFullYear()}` }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "Could not create a sheet.");

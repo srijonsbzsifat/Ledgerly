@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSheetInfo, parseSheetId } from "@/lib/sheets";
+import { getSheetInfo, parseSheetId, sheetsErrorStatus } from "@/lib/sheets";
 import {
   SHEET_COOKIE,
   SHEET_COOKIE_OPTS,
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Could not load sheet." },
-      { status: 502 }
+      { status: sheetsErrorStatus(err) }
     );
   }
 }
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Could not open sheet." },
-      { status: 502 }
+      { status: sheetsErrorStatus(err) }
     );
   }
 }

@@ -120,6 +120,82 @@ export function MonthlyBarChart({ data }: { data: MonthlyPoint[] }) {
   );
 }
 
+export interface SingleBarPoint {
+  label: string;
+  value: number;
+}
+
+/**
+ * One-series bar chart (daily trend, month-to-month). When highlightIndex
+ * is set, that bar gets the full accent colour and the rest are muted.
+ */
+export function SingleBarChart({
+  data,
+  highlightIndex,
+  maxBarSize = 28,
+  heightClass = "h-64",
+}: {
+  data: SingleBarPoint[];
+  highlightIndex?: number;
+  maxBarSize?: number;
+  heightClass?: string;
+}) {
+  const { mode, accent } = useTheme();
+  const a: AccentName = accent;
+  const bar = ACCENTS[a].chart;
+  const barLight = ACCENTS[a].chartLight;
+  const muted = mode === "dark" ? "#3f3f46" : "#d4d4d8";
+  const grid = mode === "dark" ? "#3f3f46" : "#e4e4e7";
+  const tick = mode === "dark" ? "#a1a1aa" : "#71717a";
+
+  return (
+    <div className={`${heightClass} w-full`}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barCategoryGap="20%">
+          <defs>
+            <linearGradient id="singleGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={bar} stopOpacity={1} />
+              <stop offset="100%" stopColor={barLight} stopOpacity={0.85} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={grid} />
+          <XAxis
+            dataKey="label"
+            tick={{ fill: tick, fontSize: 12 }}
+            axisLine={false}
+            tickLine={false}
+            dy={6}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            tick={{ fill: tick, fontSize: 12 }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={compact}
+            width={64}
+          />
+          <Tooltip
+            content={<ChartTooltip />}
+            cursor={{ fill: mode === "dark" ? "#27272a" : "#f4f4f5" }}
+          />
+          <Bar dataKey="value" name="Spent" radius={[6, 6, 0, 0]} maxBarSize={maxBarSize}>
+            {data.map((_, i) => (
+              <Cell
+                key={i}
+                fill={
+                  highlightIndex === undefined || i === highlightIndex
+                    ? "url(#singleGrad)"
+                    : muted
+                }
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 export function CategoryDonut({ data }: { data: CategoryPoint[] }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   return (

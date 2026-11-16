@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#10b981" },
+    { media: "(prefers-color-scheme: light)", color: "#059669" },
     { media: "(prefers-color-scheme: dark)", color: "#09090b" },
   ],
 };
@@ -50,7 +50,7 @@ export const viewport: Viewport = {
  * Runs before React hydrates so the saved theme applies with no flash.
  * Mirrors the logic in components/ThemeProvider.tsx.
  */
-const themeInitScript = `(function(){try{var t=localStorage.getItem('cash-theme');var a=localStorage.getItem('cash-accent')||'emerald';var dark=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);document.documentElement.setAttribute('data-accent',a);}catch(e){}})();`;
+const themeInitScript = `(function(){try{var t=localStorage.getItem('cash-theme');var a=localStorage.getItem('cash-accent');a=(a==='emerald'||a==='indigo')?a:'emerald';var dark=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);document.documentElement.setAttribute('data-accent',a);}catch(e){}})();`;
 
 export default function RootLayout({
   children,

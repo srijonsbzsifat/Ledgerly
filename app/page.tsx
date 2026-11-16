@@ -34,7 +34,7 @@ export default async function Home({
               <Logo className="h-20 w-20 drop-shadow-lg" />
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-              Your money, <span className="text-accent">beautifully</span> organised.
+              Your money, <span className="text-accent-ink">beautifully</span> organised.
             </h1>
             <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
               Connect your Google Sheet and see your balance, monthly income vs
@@ -71,7 +71,7 @@ export default async function Home({
               with their own Google account and sees only their own data.
             </p>
             <p className="mt-4 text-xs">
-              <Link href="/privacy" className="font-medium text-accent hover:underline">
+              <Link href="/privacy" className="font-medium text-accent-ink hover:underline">
                 Privacy policy
               </Link>
             </p>

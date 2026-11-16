@@ -44,9 +44,7 @@ function readInitial(): { mode: Mode; accent: AccentName } {
         ? "dark"
         : "light";
   const accent: AccentName =
-    storedAccent === "indigo" || storedAccent === "amber"
-      ? storedAccent
-      : "emerald";
+    storedAccent === "indigo" ? storedAccent : "emerald";
   return { mode, accent };
 }
 

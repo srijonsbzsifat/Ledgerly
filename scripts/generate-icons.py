@@ -15,8 +15,8 @@ from PIL import Image, ImageDraw, ImageOps
 
 OUT = "/home/hatch/workspace/cash-dashboard/public"
 
-ACCENT = (16, 185, 129)        # #10b981 emerald
-ACCENT_STRONG = (4, 120, 87)   # #047857
+ACCENT = (5, 150, 105)         # #059669 emerald-600 (matches the darkened theme)
+ACCENT_STRONG = (6, 95, 70)    # #065f46 emerald-800
 ROSE = (244, 63, 94)           # #f43f5e
 ZINC_200 = (228, 228, 231)     # #e4e4e7
 WHITE = (255, 255, 255)

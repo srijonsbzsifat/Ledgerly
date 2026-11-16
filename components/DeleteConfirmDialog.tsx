@@ -100,9 +100,14 @@ export function DeleteConfirmDialog({ transaction, onClose, onDeleted }: Props) 
         </div>
 
         <p id="delete-dialog-desc" className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-          This removes the entry from your sheet. It can&apos;t be undone from
-          the app — only the sheet&apos;s own version history can bring it back.
+          It waits in Trash for 30 days before going for good — you can bring
+          it back from Manage → Trash.
         </p>
+        {transaction.linkId && transaction.linkId.trim() && (
+          <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+            This is one half of a transfer — the other half goes to Trash too.
+          </p>
+        )}
 
         {error && (
           <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">

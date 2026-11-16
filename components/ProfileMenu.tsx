@@ -72,7 +72,7 @@ export function ProfileMenu({
             className="block h-9 w-9 rounded-full border border-zinc-200 dark:border-zinc-700"
           />
         ) : (
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-ink">
             {userName.charAt(0).toUpperCase()}
           </span>
         )}
@@ -155,7 +155,7 @@ export function ProfileMenu({
                   d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.257 4.257a.75.75 0 01-1.06 0l-1.061-1.06a.75.75 0 010-1.06l3.456-3.456m-2.518-3.465a4.5 4.5 0 01-1.242-7.244l4.257-4.257a.75.75 0 011.06 0l1.061 1.06a.75.75 0 010 1.06l-3.456 3.456M6.75 15.75l1.5-1.5m-3.75-9.75l1.5-1.5M6 19.5l-1.5 1.5m12-15l1.5-1.5M15 6.75l1.5-1.5"
                 />
               </svg>
-              Disconnect sheet
+              Disconnect this sheet
             </button>
           )}
           <button

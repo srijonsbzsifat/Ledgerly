@@ -18,7 +18,7 @@ const SECTIONS: { heading: string; body: string[] }[] = [
     heading: "What data the app accesses",
     body: [
       "When you sign in with Google, the app receives your basic profile information (name, email address and profile picture) so it can show who is signed in.",
-      "When you connect a sheet, the app accesses that spreadsheet only: it reads the rows of its monthly tabs and appends new rows when you add an entry. It does not read, list or access any other file in your Google Drive. If you choose to create a new sheet, the app creates one new spreadsheet in your Drive — that is the only file it ever creates.",
+      "When you connect a sheet, the app accesses that spreadsheet only: it reads the rows of its monthly tabs and appends new rows when you add an entry. It does not read, list or access any other file in your Google Drive. If you choose to create a new sheet, the app creates one new spreadsheet in your Drive — that is the only file it ever creates. Inside a connected sheet, the app may add tabs of its own — Categories, Accounts, Trash, Notes, Recurring and Budgets — to store the lists and notes you manage in the app. Those tabs live in your sheet, under your control, and nothing in them leaves Google.",
       "The app asks Google for exactly two things: your basic profile, and access to Google Sheets. It never asks for access to your email, contacts, calendar or Drive files.",
     ],
   },
@@ -27,7 +27,7 @@ const SECTIONS: { heading: string; body: string[] }[] = [
     body: [
       "Your expense data lives in your own Google Sheet and stays there. The app does not copy your transactions to its own database — there is no database. Every time you open the app it reads the current rows from your sheet.",
       "The Google sign-in tokens that let the app talk to Sheets are kept server-side inside an encrypted session, and are never shown to the browser. They are used only to read and write the sheet you connected.",
-      "The ID of your connected sheet is remembered in two places on your own device: a browser cookie (so the server knows which sheet to read) and your browser's local storage (so the app can reconnect if the cookie is lost). The connection is tied to the Google account that made it — signing in as a different account never reuses another account's sheet. Your colour theme preference is also stored in local storage on your device. Nothing else is stored.",
+      "The IDs and titles of the sheets you connect are remembered in two places on your own device: the active sheet in a browser cookie (so the server knows which sheet to read) and the list of your sheets in your browser's local storage (so you can switch between them and reconnect if the cookie is lost). The connection is tied to the Google account that made it — signing in as a different account never reuses another account's sheets. Your colour theme preference is also stored in local storage on your device. Nothing else is stored.",
     ],
   },
   {
@@ -70,7 +70,7 @@ export default function PrivacyPage() {
     <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8">
       <Link
         href="/"
-        className="text-sm font-medium text-accent hover:underline"
+        className="text-sm font-medium text-accent-ink hover:underline"
       >
         ← Back to Ledgerly
       </Link>

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createCashSheet } from "@/lib/sheets";
+import { createCashSheet, sheetsErrorStatus } from "@/lib/sheets";
 import {
   SHEET_COOKIE,
   SHEET_COOKIE_OPTS,
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     );
   }
   try {
-    const info = await createCashSheet(user.accessToken, title ?? "Cash 2026");
+    const info = await createCashSheet(user.accessToken, title ?? `Cash ${new Date().getFullYear()}`);
     const res = NextResponse.json({ connected: true, ...info });
     res.cookies.set(
       SHEET_COOKIE,
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Could not create sheet." },
-      { status: 502 }
+      { status: sheetsErrorStatus(err) }
     );
   }
 }
