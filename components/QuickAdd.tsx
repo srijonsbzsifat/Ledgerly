@@ -34,12 +34,14 @@ export function QuickAdd({
   accounts,
   transactions,
   onSaved,
+  onManageAccounts,
 }: {
   expenseCategories: string[];
   incomeCategories: string[];
   accounts: string[];
   transactions: Transaction[];
   onSaved: () => void;
+  onManageAccounts: () => void;
 }) {
   const [mode, setMode] = useState<Mode>("Debit");
   const [amount, setAmount] = useState("");
@@ -53,12 +55,21 @@ export function QuickAdd({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
+  // Shown when Transfer is tapped while there's only one account — the
+  // toggle used to be silently disabled with only a hover tooltip, so on
+  // mobile there was no way to learn why (or how to fix it).
+  const [showTransferHint, setShowTransferHint] = useState(false);
 
   const options = mode === "Debit" ? expenseCategories : incomeCategories;
   const effectiveAccount = account || accounts[0] || "Cash";
   const effectiveFrom = fromAccount || accounts[0] || "Cash";
   const effectiveTo = toAccount || accounts[1] || accounts[0] || "Cash";
   const canTransfer = accounts.length >= 2;
+
+  // Once a second account exists, the hint has done its job.
+  useEffect(() => {
+    if (canTransfer) setShowTransferHint(false);
+  }, [canTransfer]);
 
   // Keep the selected category valid when the mode changes.
   useEffect(() => {
@@ -180,15 +191,20 @@ export function QuickAdd({
           <button
             key={opt.value}
             type="button"
-            disabled={opt.value === "Transfer" && !canTransfer}
-            title={
-              opt.value === "Transfer" && !canTransfer
-                ? "Add a second account in Manage → Accounts first"
-                : undefined
-            }
-            onClick={() => setMode(opt.value)}
+            aria-disabled={opt.value === "Transfer" && !canTransfer}
+            onClick={() => {
+              if (opt.value === "Transfer" && !canTransfer) {
+                // Stays tappable on purpose: tapping explains why it's
+                // off and offers the fix, instead of doing nothing.
+                setShowTransferHint(true);
+                return;
+              }
+              setMode(opt.value);
+            }}
             aria-pressed={mode === opt.value}
-            className={`rounded-xl py-2 text-sm font-semibold transition disabled:opacity-40 ${
+            className={`rounded-xl py-2 text-sm font-semibold transition ${
+              opt.value === "Transfer" && !canTransfer ? "opacity-40" : ""
+            } ${
               mode === opt.value
                 ? "bg-white text-zinc-900 shadow-card dark:bg-zinc-900 dark:text-white"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
@@ -198,6 +214,23 @@ export function QuickAdd({
           </button>
         ))}
       </div>
+
+      {showTransferHint && !canTransfer && (
+        <div className="rounded-xl bg-accent-soft px-3.5 py-3 text-sm text-accent-ink">
+          <p className="font-semibold">Transfers need two accounts.</p>
+          <p className="mt-0.5 text-xs leading-relaxed opacity-80">
+            A transfer moves money from one of your accounts to another. Add
+            a second account and the Transfer option unlocks.
+          </p>
+          <button
+            type="button"
+            onClick={onManageAccounts}
+            className="mt-2 text-sm font-semibold underline underline-offset-2"
+          >
+            Add an account →
+          </button>
+        </div>
+      )}
 
       {mode === "Transfer" ? (
         <div className="grid grid-cols-2 gap-3">

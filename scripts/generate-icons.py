@@ -1,123 +1,83 @@
 #!/usr/bin/env python3
-"""Regenerate the Ledgerly app icons from the ledger logo design.
+"""Regenerate the Ledgerly app icons from the 3D wallet logo.
 
-Draws the same mark as components/Logo.tsx with PIL (no SVG renderer on
-this machine): a ruled ledger page with a folded corner, red margin line
-and column divider on an emerald gradient tile.
+Source: docs/logo-options/logo-wallet-gold-bright.webp — Sifat's final pick
+(2026-11-17): a LARGE bright glossy emerald wallet, slightly open, with a
+gold card sliding out and a gold $ coin on the front, on a DARK navy
+background (the dark outline Sifat asked to keep).
+(History: the first wallet, logo-wallet.webp, was small in the frame with
+gold; the clean version, logo-wallet-clean.webp, removed the gold; Sifat
+then picked the enlarged wallet WITH gold (logo-wallet-gold-big.webp),
+then found it too dark next to MyLedger's bright cube, so it was relit
+brighter (logo-wallet-gold-bright.webp); the background then went deep
+emerald (logo-wallet-gold-bright-emerald.webp) and bright vivid emerald
+(logo-wallet-gold-bright-green-bg.webp) — but Sifat found the bright
+emerald background looked very bad in the tab and asked to keep the wallet
+with the dark outline like before, so the bright wallet on dark navy is
+the final mark. Simple cube/L alternatives (logo-plain-cube2.webp,
+logo-gold-base-cube2.webp, logo-bold-l2.webp) were offered and passed over
+in favour of the wallet. The earlier version of this script drew the flat
+SVG ledger mark with PIL; that art is retired — components/Logo.tsx now
+uses public/logo-3d.png.)
 
 Outputs (all under public/):
-  icons/icon-192.png, icons/icon-512.png  — "any" purpose, rounded tile
-  icons/maskable-512.png                  — full-bleed, art inside the 80% safe zone
-  apple-touch-icon.png (180x180)          — full-bleed, opaque
+  logo-3d.png (512x512)                 — loading-screen centre
+  icons/icon-192.png, icons/icon-512.png — "any" purpose
+  icons/maskable-512.png                — full-bleed, art scaled to 72% so it
+                                          sits inside the 80% maskable safe zone
+  apple-touch-icon.png (180x180)        — full-bleed, opaque
+  favicon.png (48x48)                   — browser tab icon
 """
-import sys
-from PIL import Image, ImageDraw, ImageOps
+import os
 
-OUT = "/home/hatch/workspace/cash-dashboard/public"
+from PIL import Image
 
-ACCENT = (5, 150, 105)         # #059669 emerald-600 (matches the darkened theme)
-ACCENT_STRONG = (6, 95, 70)    # #065f46 emerald-800
-ROSE = (244, 63, 94)           # #f43f5e
-ZINC_200 = (228, 228, 231)     # #e4e4e7
-WHITE = (255, 255, 255)
-
-
-def diagonal_gradient(size, c1, c2):
-    """Diagonal gradient (top-left c1 -> bottom-right c2), RGB image."""
-    try:
-        import numpy as np
-    except ImportError:
-        np = None
-    if np is not None:
-        y, x = np.mgrid[0:size, 0:size]
-        t = ((x + y) / (2 * (size - 1))).astype(np.float32)
-        arr = np.zeros((size, size, 3), dtype=np.uint8)
-        for i in range(3):
-            arr[:, :, i] = (c1[i] + (c2[i] - c1[i]) * t).astype(np.uint8)
-        return Image.fromarray(arr, "RGB")
-    # Fallback: vertical gradient rotated 45 degrees, centre-cropped.
-    big = size * 2
-    g = Image.linear_gradient("L").resize((big, big))
-    g = g.rotate(45, resample=Image.BICUBIC)
-    g = g.crop(((big - size) // 2, (big - size) // 2,
-                (big + size) // 2, (big + size) // 2))
-    return ImageOps.colorize(g, black=c1, white=c2)
-
-
-def _round_line(draw, p1, p2, width, fill):
-    draw.line([p1, p2], fill=fill, width=width)
-    r = width / 2
-    for (x, y) in (p1, p2):
-        draw.ellipse([x - r, y - r, x + r, y + r], fill=fill)
-
-
-def draw_ledger(img, scale, ox, oy):
-    """Draw the ledger page art. (x, y) in the 64-grid map to
-    (ox + x*scale, oy + y*scale). img is RGBA."""
-    def X(v):
-        return ox + v * scale
-
-    def Y(v):
-        return oy + v * scale
-
-    draw = ImageDraw.Draw(img)
-    # Page: white rounded rect with the folded top-right corner cut out.
-    mask = Image.new("L", img.size, 0)
-    md = ImageDraw.Draw(mask)
-    md.rounded_rectangle([X(15), Y(12), X(49), Y(52)], radius=3 * scale, fill=255)
-    md.polygon([(X(40), Y(12)), (X(49), Y(21)), (X(40), Y(21))], fill=0)
-    white = Image.new("RGBA", img.size, WHITE + (255,))
-    img.paste(white, (0, 0), mask)
-    # Folded corner.
-    draw.polygon([(X(40), Y(12)), (X(49), Y(21)), (X(40), Y(21))], fill=ZINC_200 + (255,))
-    # Red margin line, column divider, ruled lines.
-    _round_line(draw, (X(21), Y(25)), (X(21), Y(45)), max(1, round(2 * scale)), ROSE + (255,))
-    _round_line(draw, (X(37), Y(25)), (X(37), Y(45)), max(1, round(2 * scale)), ZINC_200 + (255,))
-    for yy in (27, 34, 41):
-        _round_line(draw, (X(24), Y(yy)), (X(45), Y(yy)),
-                    max(1, round(2.5 * scale)), ACCENT + (255,))
-
-
-def rounded_tile(size, radius_frac=15 / 64, ss=4):
-    """Gradient tile with rounded corners on a transparent canvas (supersampled)."""
-    big = size * ss
-    grad = diagonal_gradient(big, ACCENT, ACCENT_STRONG).convert("RGBA")
-    mask = Image.new("L", (big, big), 0)
-    md = ImageDraw.Draw(mask)
-    md.rounded_rectangle([big * 2 / 64, big * 2 / 64,
-                          big * 62 / 64, big * 62 / 64],
-                         radius=radius_frac * big, fill=255)
-    grad.putalpha(mask)
-    return grad
-
-
-def make_any(size, path):
-    ss = 4
-    img = rounded_tile(size, ss=ss)
-    draw_ledger(img, scale=(size * ss) / 64, ox=0, oy=0)
-    img = img.resize((size, size), Image.LANCZOS)
-    img.save(path, "PNG")
-    print(f"wrote {path} ({size}x{size})")
-
-
-def make_full_bleed(size, path, art_scale):
-    """Opaque full-bleed gradient square; art scaled to art_scale, centred."""
-    ss = 4
-    big = size * ss
-    grad = diagonal_gradient(big, ACCENT, ACCENT_STRONG).convert("RGBA")
-    pad = (1 - art_scale) / 2
-    draw_ledger(grad, scale=big * art_scale / 64, ox=big * pad, oy=big * pad)
-    grad = grad.convert("RGB").resize((size, size), Image.LANCZOS)
-    grad.save(path, "PNG")
-    print(f"wrote {path} ({size}x{size})")
+BASE = "/home/hatch/workspace/cash-dashboard"
+SRC = os.path.join(BASE, "docs/logo-options/logo-wallet-gold-bright.webp")
+OUT = os.path.join(BASE, "public")
+BG = (11, 12, 25)  # the source image's corner background colour (dark navy)
 
 
 def main():
-    make_any(512, f"{OUT}/icons/icon-512.png")
-    make_any(192, f"{OUT}/icons/icon-192.png")
-    make_full_bleed(512, f"{OUT}/icons/maskable-512.png", art_scale=0.80)
-    make_full_bleed(180, f"{OUT}/apple-touch-icon.png", art_scale=0.85)
+    src = Image.open(SRC).convert("RGB")
+    print("source:", src.size)
+
+    # Loader art at 512.
+    logo = src.resize((512, 512), Image.LANCZOS)
+    logo.save(os.path.join(OUT, "logo-3d.png"), optimize=True)
+
+    # "any" icons: the full tile, resized.
+    for size, name in ((192, "icons/icon-192.png"), (512, "icons/icon-512.png")):
+        src.resize((size, size), Image.LANCZOS).save(
+            os.path.join(OUT, name), optimize=True
+        )
+
+    # Maskable: scale the art to 72% and centre it on the background colour,
+    # so the wallet stays inside the 80% safe circle on any mask shape.
+    canvas = Image.new("RGB", (512, 512), BG)
+    art = src.resize((368, 368), Image.LANCZOS)  # 72% of 512
+    canvas.paste(art, ((512 - 368) // 2, (512 - 368) // 2))
+    canvas.save(os.path.join(OUT, "icons/maskable-512.png"), optimize=True)
+
+    # Apple touch icon + favicon: full tile, resized.
+    src.resize((180, 180), Image.LANCZOS).save(
+        os.path.join(OUT, "apple-touch-icon.png"), optimize=True
+    )
+    src.resize((48, 48), Image.LANCZOS).save(
+        os.path.join(OUT, "favicon.png"), optimize=True
+    )
+
+    for f in (
+        "logo-3d.png",
+        "icons/icon-192.png",
+        "icons/icon-512.png",
+        "icons/maskable-512.png",
+        "apple-touch-icon.png",
+        "favicon.png",
+    ):
+        p = os.path.join(OUT, f)
+        print(f"  {f}: {os.path.getsize(p):,} bytes")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

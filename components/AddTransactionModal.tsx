@@ -38,6 +38,7 @@ interface Props {
   onRecurringChanged: (patterns: MarkedPattern[]) => void;
   onClose: () => void;
   onSaved: () => void;
+  onManageAccounts: () => void;
 }
 
 export function AddTransactionModal({
@@ -51,6 +52,7 @@ export function AddTransactionModal({
   onRecurringChanged,
   onClose,
   onSaved,
+  onManageAccounts,
 }: Props) {
   const [date, setDate] = useState(todayLocal());
   const [mode, setMode] = useState<Mode>("Debit");
@@ -64,6 +66,10 @@ export function AddTransactionModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  // Shown when Transfer is tapped while there's only one account — same
+  // as QuickAdd: the toggle used to be silently disabled with only a
+  // hover tooltip.
+  const [showTransferHint, setShowTransferHint] = useState(false);
   // The recurring checkbox follows the mark for the current
   // category+description — unless the user toggled it this session, in
   // which case their toggle wins until the modal reopens.
@@ -75,6 +81,11 @@ export function AddTransactionModal({
   const effectiveFrom = fromAccount || accounts[0] || "Cash";
   const effectiveTo = toAccount || accounts[1] || accounts[0] || "Cash";
   const canTransfer = accounts.length >= 2;
+
+  // Once a second account exists, the hint has done its job.
+  useEffect(() => {
+    if (canTransfer) setShowTransferHint(false);
+  }, [canTransfer]);
 
   // Reset the form each time the modal opens — blank for a new entry,
   // prefilled from the entry being edited.
@@ -380,15 +391,20 @@ export function AddTransactionModal({
                 <button
                   key={opt.value}
                   type="button"
-                  disabled={opt.value === "Transfer" && !canTransfer}
-                  title={
-                    opt.value === "Transfer" && !canTransfer
-                      ? "Add a second account in Manage → Accounts first"
-                      : undefined
-                  }
-                  onClick={() => setMode(opt.value)}
+                  aria-disabled={opt.value === "Transfer" && !canTransfer}
+                  onClick={() => {
+                    if (opt.value === "Transfer" && !canTransfer) {
+                      // Stays tappable on purpose: tapping explains why
+                      // it's off and offers the fix, instead of nothing.
+                      setShowTransferHint(true);
+                      return;
+                    }
+                    setMode(opt.value);
+                  }}
                   aria-pressed={mode === opt.value}
-                  className={`rounded-xl py-2.5 text-sm font-semibold transition disabled:opacity-40 ${
+                  className={`rounded-xl py-2.5 text-sm font-semibold transition ${
+                    opt.value === "Transfer" && !canTransfer ? "opacity-40" : ""
+                  } ${
                     mode === opt.value
                       ? "bg-white text-zinc-900 shadow-card dark:bg-zinc-900 dark:text-white"
                       : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
@@ -398,6 +414,23 @@ export function AddTransactionModal({
                 </button>
               ))}
             </div>
+
+            {showTransferHint && !canTransfer && !editing && (
+              <div className="mb-4 rounded-xl bg-accent-soft px-3.5 py-3 text-sm text-accent-ink">
+                <p className="font-semibold">Transfers need two accounts.</p>
+                <p className="mt-0.5 text-xs leading-relaxed opacity-80">
+                  A transfer moves money from one of your accounts to another.
+                  Add a second account and the Transfer option unlocks.
+                </p>
+                <button
+                  type="button"
+                  onClick={onManageAccounts}
+                  className="mt-2 text-sm font-semibold underline underline-offset-2"
+                >
+                  Add an account →
+                </button>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>

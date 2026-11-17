@@ -9,8 +9,8 @@
  * - /api/* requests (including /api/auth/*) are never intercepted or cached,
  *   so the sign-in flow and sheet reads/writes always go to the network.
  */
-const CACHE = "ledgerly-static-v1";
-const SHELL = ["/", "/icons/icon-192.png", "/icons/icon-512.png", "/apple-touch-icon.png"];
+const CACHE = "ledgerly-static-v7";
+const SHELL = ["/", "/icons/icon-192.png", "/icons/icon-512.png", "/apple-touch-icon.png", "/logo-3d.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -51,6 +51,7 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icons/") ||
     url.pathname === "/apple-touch-icon.png" ||
+    url.pathname === "/logo-3d.png" ||
     url.pathname === "/manifest.webmanifest"
   ) {
     event.respondWith(

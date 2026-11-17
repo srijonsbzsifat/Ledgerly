@@ -200,7 +200,7 @@ export function CategoryDonut({ data }: { data: CategoryPoint[] }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
-      <div className="h-52 w-52 shrink-0">
+      <div className="h-44 w-44 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Tooltip content={<ChartTooltip />} />
@@ -208,8 +208,8 @@ export function CategoryDonut({ data }: { data: CategoryPoint[] }) {
               data={data}
               dataKey="value"
               nameKey="name"
-              innerRadius={62}
-              outerRadius={92}
+              innerRadius={52}
+              outerRadius={78}
               paddingAngle={2}
               cornerRadius={5}
               strokeWidth={0}
@@ -228,7 +228,7 @@ export function CategoryDonut({ data }: { data: CategoryPoint[] }) {
               className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
             />
-            <span className="min-w-0 flex-1 truncate">{d.name}</span>
+            <span className="min-w-0 flex-1 break-words">{d.name}</span>
             <span className="shrink-0 font-semibold">{formatBDT(d.value)}</span>
             <span className="w-11 shrink-0 text-right text-xs text-zinc-500">
               {total > 0 ? `${Math.round((d.value / total) * 100)}%` : "—"}

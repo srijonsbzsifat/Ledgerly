@@ -40,6 +40,7 @@ import {
   type TxType,
 } from "@/lib/types";
 import { AddTransactionModal } from "./AddTransactionModal";
+import { BrandLoader } from "./BrandLoader";
 import { BulkDeleteDialog } from "./BulkDeleteDialog";
 import { CategoryDonut, MonthlyBarChart, type CategoryPoint, type MonthlyPoint } from "./Charts";
 import { CategoryBars } from "./CategoryBars";
@@ -59,6 +60,7 @@ import { RecentList } from "./RecentList";
 import { ReportsView } from "./ReportsView";
 import { SheetPicker } from "./SheetPicker";
 import { SheetSwitcher } from "./SheetSwitcher";
+import { Sidebar, type SidebarId } from "./Sidebar";
 import { TabMenu } from "./TabMenu";
 import { Card, Spinner } from "./ui";
 
@@ -118,11 +120,11 @@ function SyncPill({
   );
 }
 
-/** Month selector pills, shared by both tabs and kept in sync via props.
-    A year selector sits in front of the pills: one sheet holds every year,
-    so each year's month is viewed independently (January 2026 vs January
-    2027), with "All years" keeping the combined view. */
-function MonthPills({
+/** Month and year selector dropdowns, shared by both tabs and kept in sync
+    via props. A year selector sits next to the month selector: one sheet
+    holds every year, so each year's month is viewed independently (January
+    2026 vs January 2027), with "All years" keeping the combined view. */
+function MonthSelector({
   monthFilter,
   onChange,
   yearFilter,
@@ -135,23 +137,6 @@ function MonthPills({
   years: number[];
   onYearChange: (y: YearFilter) => void;
 }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  // Keep the selected pill visible: on mount (e.g. November on first load)
-  // and whenever the selection changes, centre it in the scrollable row.
-  // Manual scrollLeft math (not scrollIntoView) so the page itself never jumps.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const active = container.querySelector<HTMLButtonElement>(
-      '[aria-pressed="true"]'
-    );
-    if (!active) return;
-    const target =
-      active.offsetLeft - container.clientWidth / 2 + active.clientWidth / 2;
-    container.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
-  }, [monthFilter]);
-
   return (
     <div className="flex items-center gap-2">
       <select
@@ -170,38 +155,22 @@ function MonthPills({
         ))}
         <option value="all">All years</option>
       </select>
-      <div
-        ref={containerRef}
-        className="scrollbar-thin -mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0"
+      <select
+        value={monthFilter === "all" ? "all" : String(monthFilter)}
+        onChange={(e) => {
+          const v = e.target.value;
+          onChange(v === "all" ? "all" : Number(v));
+        }}
+        aria-label="Filter by month"
+        className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold outline-none transition focus:border-accent hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
       >
-        <button
-          type="button"
-          onClick={() => onChange("all")}
-          aria-pressed={monthFilter === "all"}
-          className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
-            monthFilter === "all"
-              ? "bg-zinc-900 text-white shadow-card dark:bg-white dark:text-zinc-900"
-              : "border border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900"
-          }`}
-        >
-          All months
-        </button>
+        <option value="all">All months</option>
         {MONTHS.map((m, i) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => onChange(i)}
-            aria-pressed={monthFilter === i}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
-              monthFilter === i
-                ? "bg-accent text-white shadow-card"
-                : "border border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900"
-            }`}
-          >
-            {MONTH_SHORT[i]}
-          </button>
+          <option key={m} value={String(i)}>
+            {m}
+          </option>
         ))}
-      </div>
+      </select>
     </div>
   );
 }
@@ -889,6 +858,28 @@ export function Dashboard({ userName, userImage }: Props) {
     if (tab === "manage") setManageSection(null);
   }
 
+  /** Sidebar navigation (desktop). Notes jumps straight to Manage →
+      Notes; the other items are plain tab switches. */
+  function handleSidebarSelect(id: SidebarId) {
+    if (id === "notes") {
+      setActiveTab("manage");
+      setManageSection("notes");
+    } else {
+      handleTabChange(id);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /** Jump to Manage → Accounts — the fix offered when Transfer is tapped
+      with only one account. Closes the add modal first if it's open. */
+  function goToAccounts() {
+    setModalOpen(false);
+    setEditingTx(null);
+    setActiveTab("manage");
+    setManageSection("accounts");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   /** A help article's "Take me there" jump. */
   function handleHelpNavigate(action: HelpAction) {
     if (action.kind === "add") {
@@ -1209,10 +1200,24 @@ export function Dashboard({ userName, userImage }: Props) {
   const initialLoading = loading && transactions.length === 0;
 
   return (
-    <div className="min-h-screen">
+    <div className={sheet ? "min-h-screen lg:pl-64" : "min-h-screen"}>
+      {sheet && (
+        <Sidebar
+          activeTab={activeTab}
+          manageSection={manageSection}
+          transactionCount={scopedTx.length}
+          onSelect={handleSidebarSelect}
+          onHelp={() => setHelpOpen(true)}
+        />
+      )}
       <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-zinc-50/80 backdrop-blur-md dark:border-zinc-800/70 dark:bg-zinc-950/80">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
-          <LogoLockup />
+          {/* The sidebar carries the logo on desktop, so the header's copy
+              hides there — but only while a sheet is connected (the
+              sidebar only renders then). */}
+          <span className={sheet ? "lg:hidden" : ""}>
+            <LogoLockup />
+          </span>
           {sheet && (
             <SheetSwitcher
               sheets={sheets}
@@ -1257,9 +1262,10 @@ export function Dashboard({ userName, userImage }: Props) {
         </div>
         {/* Tab navigation lives in the sticky header — pills on desktop, a
             burger menu on mobile — so it's always reachable without
-            scrolling back to the top. */}
+            scrolling back to the top. On a wide screen the sidebar is
+            the navigation instead, so this row hides there. */}
         {sheet && (
-          <div className="mx-auto max-w-6xl px-4 pb-3 sm:px-6">
+          <div className="mx-auto max-w-6xl px-4 pb-3 sm:px-6 lg:hidden">
             <TabMenu
               activeTab={activeTab}
               onChange={handleTabChange}
@@ -1271,14 +1277,7 @@ export function Dashboard({ userName, userImage }: Props) {
 
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-6 sm:px-6 sm:pt-8">
         {!sheetChecked ? (
-          <div className="space-y-4">
-            <div className="h-44 animate-pulse rounded-3xl bg-zinc-200/70 dark:bg-zinc-800/70" />
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-28 animate-pulse rounded-3xl bg-zinc-200/70 dark:bg-zinc-800/70" />
-              ))}
-            </div>
-          </div>
+          <BrandLoader />
         ) : authExpired ? (
           <div className="flex min-h-[60vh] items-center justify-center py-10">
             <div className="mx-auto w-full max-w-lg rounded-3xl border border-zinc-200 bg-white p-6 text-center shadow-card dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
@@ -1331,6 +1330,11 @@ export function Dashboard({ userName, userImage }: Props) {
           <div className="flex min-h-[60vh] items-center justify-center py-10">
             <SheetPicker onConnected={handleConnected} />
           </div>
+        ) : initialLoading ? (
+          // First data load (or a sheet switch): the branded loader
+          // covers the whole content area instead of the per-section
+          // skeleton blocks, which never read as "loading" at all.
+          <BrandLoader />
         ) : (
           <>
             {toast && (
@@ -1403,7 +1407,7 @@ export function Dashboard({ userName, userImage }: Props) {
 
                 {/* Month selector */}
                 <div className="mt-6">
-                  <MonthPills monthFilter={monthFilter} onChange={setMonthFilter} yearFilter={effectiveYear} years={years} onYearChange={setYearFilter} />
+                  <MonthSelector monthFilter={monthFilter} onChange={setMonthFilter} yearFilter={effectiveYear} years={years} onYearChange={setYearFilter} />
                 </div>
 
                 {/* Overview sections (R11): a flex column whose children
@@ -1548,6 +1552,7 @@ export function Dashboard({ userName, userImage }: Props) {
                             setToast("✅ Entry saved to your sheet.");
                             void loadTransactions();
                           }}
+                          onManageAccounts={goToAccounts}
                         />
                       </div>
                     </Card>
@@ -1805,7 +1810,7 @@ export function Dashboard({ userName, userImage }: Props) {
 
                 {/* Month selector (synced with Overview) */}
                 <div className="mt-4">
-                  <MonthPills monthFilter={monthFilter} onChange={setMonthFilter} yearFilter={effectiveYear} years={years} onYearChange={setYearFilter} />
+                  <MonthSelector monthFilter={monthFilter} onChange={setMonthFilter} yearFilter={effectiveYear} years={years} onYearChange={setYearFilter} />
                 </div>
 
                 {initialLoading ? (
@@ -2233,6 +2238,7 @@ export function Dashboard({ userName, userImage }: Props) {
           setToast(editingTx ? "✅ Entry updated." : "✅ Entry saved to your sheet.");
           void loadTransactions();
         }}
+        onManageAccounts={goToAccounts}
       />
 
       <OverviewCustomiseModal
